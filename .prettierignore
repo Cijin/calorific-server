@@ -1,1 +1,18 @@
+# packages
+node_modules
+
+# build 
 build
+
+# test-coverage
+coverage
+
+.vscode
+.DS_STORE
+.env
+tmp
+
+# docker-compose backups
+redis-conf
+redis-data
+db-data

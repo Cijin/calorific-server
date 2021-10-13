@@ -15,4 +15,4 @@ tmp
 # docker-compose backups
 redis-conf
 redis-data
-db-data
+db-data/

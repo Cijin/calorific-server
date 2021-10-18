@@ -2,9 +2,22 @@ import { DateTime } from 'luxon'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { column, beforeSave, BaseModel } from '@ioc:Adonis/Lucid/Orm'
 
+import { UserType } from 'Types'
+
 export default class User extends BaseModel {
+  /*
+   * use uuid as primary key
+   * self assign key every time a new user is created
+   */
+  public static selfAssignPrimaryKey = true
+
   @column({ isPrimary: true })
-  public id: number
+  public id: string
+
+  public userType: UserType
+
+  @column()
+  public username: string
 
   @column()
   public email: string

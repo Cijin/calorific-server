@@ -24,14 +24,17 @@
       "Database/*": [
         "./database/*"
       ],
-      "Types": [ "./@types" ]
+      "Types": [
+        "./@types"
+      ]
     },
     "types": [
       "@adonisjs/core",
       "@adonisjs/repl",
       "@adonisjs/lucid",
       "@adonisjs/redis",
-      "@adonisjs/auth"
+      "@adonisjs/auth",
+      "@adonisjs/mail"
     ]
   }
 }

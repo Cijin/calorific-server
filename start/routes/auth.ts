@@ -19,4 +19,12 @@ Route.group(() => {
    */
   Route.post('/forgotPassword', 'AuthController.sendPasswordResetEmail')
   Route.post('/resetPassword', 'AuthController.resetPassword')
+  /*
+  |--------------------------------------------------------------------------
+  | Email Routes
+  |--------------------------------------------------------------------------
+  */
+  // validate emails
+  Route.get('/verify/:email', 'AuthController.validateEmail')
+  // @TODO: validate password reset link and show reset form
 }).prefix('/api/')

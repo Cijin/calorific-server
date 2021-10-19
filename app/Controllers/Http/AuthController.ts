@@ -1,4 +1,5 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import ENV from '@ioc:Adonis/Core/Env'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 
 import User from 'App/Models/User'
@@ -55,7 +56,7 @@ export default class AuthController {
    * sends email to the email with a password reset link
    *
    */
-  public async sendResetEmail({
+  public async sendPasswordResetEmail({
     request,
     response,
     logger,
@@ -192,6 +193,114 @@ export default class AuthController {
     } catch (error) {
       logger.error(error)
       return response.badRequest(error.messages)
+    }
+  }
+
+  /*
+   * @param ctx object
+   * @returns object with key success of type boolean
+   *
+   * resets the password for the account with the email in the request form
+   * if password reset successfull
+   *  * sends email to user
+   *  * renders the success page with a button to
+   *    route to the signIn page
+   */
+  public async resetPassword({ request, response, logger, view }) {
+    // create validator
+    const passwordResetSchema = schema.create({
+      email: schema.string({}, [
+        rules.email(),
+        rules.exists({
+          table: 'users',
+          column: 'email',
+        }),
+      ]),
+      password: schema.string({}, [
+        rules.confirmed('passwordConfirmed'),
+        rules.minLength(8),
+      ]),
+    })
+
+    // error messages
+    const messages = {
+      'required': 'The {{ field }} is required',
+      'email.email': 'Not a valid email',
+      'email.exists': 'This user does not exist',
+      'password.minLength': 'Password should be at least 8 characters long',
+      'passwordConfirmed.confirmed': 'Passwords do not match',
+    }
+
+    try {
+      const { email, password } = await request.input.validate({
+        schema: passwordResetSchema,
+        messages,
+      })
+
+      logger.info(`Resetting password for email ${email}`)
+      const user = await User.findOrFail(email)
+
+      user.password = password
+      await user.save()
+
+      // @TODO: send user an email to inform the password update
+      logger.info(`Password reset for email ${email}`)
+
+      // get sign in route
+      const signInRoute = ENV.get('DOMAIN') + '/register/signIn'
+
+      // render success page
+      return view.render('success', {
+        signInRoute,
+      })
+    } catch (error) {
+      return response.json({ error: true, message: error.message })
+    }
+  }
+
+  /*
+   * @params ctx object of type HttpContextContract
+   * @returns message of type string, and a success boolean
+   *
+   * validates email provided by a user on signUp
+   * if the signature is valid, updates the database row to have emailVerified set to true
+   * ex: request = http:.../verify/test@test.com?signature=...
+   *  returns { message: 'Email validated' }
+   *
+   */
+  public async validateEmail({
+    request,
+    response,
+    logger,
+  }: HttpContextContract) {
+    // check is signature valid
+    if (!request.hasValidSignature()) {
+      return response.json({
+        success: false,
+        message: 'Signature is missing or URL was tampered',
+      })
+    }
+    // udate model
+    // return success response
+    try {
+      // verify/:email
+      const email = request.params().email
+
+      const user = await User.findByOrFail('email', email)
+      // update user email verification status
+      user.isEmailVerified = true
+      await user.save()
+
+      // log email update
+      logger.info(`User email:${email} verified`)
+
+      return response.json({
+        success: true,
+        message: 'Email verified.',
+      })
+    } catch (error) {
+      logger.error(error.message)
+      return response.badRequest(error.message)
     }
   }
 }

@@ -1,10 +1,10 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
-import ENV from '@ioc:Adonis/Core/Env'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
 
 import User from 'App/Models/User'
 import PasswordResetEmail from 'App/Mailers/PasswordResetEmail'
 import VerifyEmail from 'App/Mailers/VerifyEmail'
+import { UserTypeEnum } from 'Types'
 
 export default class AuthController {
   public async login({ auth, request, response }: HttpContextContract) {
@@ -114,7 +114,7 @@ export default class AuthController {
    *  - if user valid update model
    *  - send verification email to new user
    */
-  public async signUp({
+  public async register({
     request,
     response,
     auth,
@@ -125,7 +125,7 @@ export default class AuthController {
      *
      */
     const newUserSchema = schema.create({
-      username: schema.string({}, [
+      username: schema.string({ trim: true }, [
         // username must be unique
         rules.unique({
           table: 'users',
@@ -133,7 +133,7 @@ export default class AuthController {
         }),
         rules.minLength(4),
       ]),
-      email: schema.string({}, [
+      email: schema.string({ trim: true }, [
         // check if valid email and is unique
         rules.email(),
         rules.unique({
@@ -141,6 +141,7 @@ export default class AuthController {
           column: 'email',
         }),
       ]),
+      userType: schema.enum(Object.values(UserTypeEnum)),
       password: schema.string({}, [
         rules.confirmed('passwordConfirmed'),
         rules.minLength(8),
@@ -155,12 +156,13 @@ export default class AuthController {
       'username.unique': 'Username already taken',
       'email.unique': 'An account with this email already exists',
       'email.email': 'Email is not valid',
+      'userType': 'User type is required',
       'passwordConfirmed.confirmed': 'Passwords do not match',
     }
 
     try {
       // validate inputs
-      const { username, email, password } = await request.validate({
+      const { username, email, userType, password } = await request.validate({
         schema: newUserSchema,
         messages,
       })
@@ -168,6 +170,7 @@ export default class AuthController {
       logger.info(`Adding new user to db: ${username}`)
       const user = await User.create({
         username,
+        userType,
         email,
         password,
         isEmailVerified: false,
@@ -206,7 +209,7 @@ export default class AuthController {
    *  * renders the success page with a button to
    *    route to the signIn page
    */
-  public async resetPassword({ request, response, logger, view }) {
+  public async resetPassword({ request, response, logger }) {
     // create validator
     const passwordResetSchema = schema.create({
       email: schema.string({}, [
@@ -243,15 +246,12 @@ export default class AuthController {
       user.password = password
       await user.save()
 
-      // @TODO: send user an email to inform the password update
       logger.info(`Password reset for email ${email}`)
 
-      // get sign in route
-      const signInRoute = ENV.get('DOMAIN') + '/register/signIn'
-
-      // render success page
-      return view.render('success', {
-        signInRoute,
+      return response.json({
+        success: true,
+        data: { email },
+        message: 'User registered but not verified.',
       })
     } catch (error) {
       return response.json({ error: true, message: error.message })
@@ -262,7 +262,7 @@ export default class AuthController {
    * @params ctx object of type HttpContextContract
    * @returns message of type string, and a success boolean
    *
-   * validates email provided by a user on signUp
+   * validates email provided by a user on register
    * if the signature is valid, updates the database row to have emailVerified set to true
    * ex: request = http:.../verify/test@test.com?signature=...
    *  returns { message: 'Email validated' }

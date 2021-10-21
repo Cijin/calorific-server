@@ -12,6 +12,8 @@ Route.group(() => {
   Route.get('isLoggedIn', 'AuthController.isLoggedIn')
 
   Route.get('logout', 'AuthController.logout')
+
+  Route.post('/register', 'AuthController.register')
   /*
    * PasswordResetController
    * sendResetEmail -> sends email with signed reset link

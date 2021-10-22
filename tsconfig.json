@@ -24,8 +24,8 @@
       "Database/*": [
         "./database/*"
       ],
-      "Types": [
-        "./@types"
+      "Types/*": [
+        "./@types/*"
       ]
     },
     "types": [

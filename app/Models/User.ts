@@ -2,7 +2,7 @@ import { DateTime } from 'luxon'
 import Hash from '@ioc:Adonis/Core/Hash'
 import { column, beforeSave, BaseModel } from '@ioc:Adonis/Lucid/Orm'
 
-import { UserType } from 'Types'
+import { UserType } from '../../@types/User'
 
 export default class User extends BaseModel {
   /*
@@ -14,6 +14,7 @@ export default class User extends BaseModel {
   @column({ isPrimary: true })
   public id: string
 
+  @column()
   public userType: UserType
 
   @column()
@@ -27,6 +28,9 @@ export default class User extends BaseModel {
 
   @column()
   public rememberMeToken?: string
+
+  @column()
+  public isEmailVerified: boolean
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime

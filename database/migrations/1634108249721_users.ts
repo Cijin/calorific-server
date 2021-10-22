@@ -22,6 +22,7 @@ export default class UsersSchema extends BaseSchema {
       table.string('email').unique().notNullable()
       table.string('password').notNullable()
       table.string('remember_me_token').nullable()
+      table.boolean('is_email_verified').notNullable()
 
       /**
        * Uses timestampz for PostgreSQL and DATETIME2 for MSSQL

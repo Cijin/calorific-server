@@ -1,23 +1,34 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { schema, rules } from '@ioc:Adonis/Core/Validator'
+import Hash from '@ioc:Adonis/Core/Hash'
 
 import User from 'App/Models/User'
 import PasswordResetEmail from 'App/Mailers/PasswordResetEmail'
 import VerifyEmail from 'App/Mailers/VerifyEmail'
-import { UserTypeEnum } from 'Types'
+import { UserTypeEnum } from '../../../@types/User'
 
 export default class AuthController {
   public async login({ auth, request, response }: HttpContextContract) {
     const { email, password, rememberMe } = request.all()
 
     try {
-      // attempt login
-      await auth.use('api').attempt(email, password, rememberMe)
+      const user = await User.query().where('email', email).firstOrFail()
 
-      const { username } = await User.query()
-        .where('email', email)
-        .firstOrFail()
-      return response.json({ success: true, data: { username } })
+      // verify password
+      if (!(await Hash.verify(user.password, password))) {
+        throw new Error('Invalid credentials')
+      }
+
+      // Generate token
+      const token = await auth.use('api').generate(user, {
+        expiresIn: rememberMe ? '90days' : '30days',
+      })
+
+      return response.json({
+        success: true,
+        data: { user },
+        token: token.toJSON(),
+      })
     } catch (error) {
       return response.badRequest({
         success: false,
@@ -29,13 +40,17 @@ export default class AuthController {
   public async isLoggedIn({ auth, response }: HttpContextContract) {
     try {
       await auth.use('api').authenticate()
+      const isLoggedIn = auth.use('api').isLoggedIn
 
       // get username and email from the auth user object
       const user = auth.user
 
-      return response.json({ success: true, user })
+      return response.json({ success: true, user, isLoggedIn })
     } catch (error) {
-      return response.badRequest({ success: false, message: 'Not logged in' })
+      return response.badRequest({
+        success: false,
+        message: 'User not logged in',
+      })
     }
   }
 
@@ -43,9 +58,12 @@ export default class AuthController {
     /*
      * logout user
      */
-    await auth.use('api').logout()
+    await auth.use('api').revoke()
 
-    return response.json({ message: 'User successfully logged out' })
+    return response.json({
+      success: true,
+      message: 'User successfully logged out',
+    })
   }
 
   /*
@@ -176,11 +194,13 @@ export default class AuthController {
         isEmailVerified: false,
       })
 
-      logger.info(`Logging in new user: ${user.username}`)
+      logger.info(`Generating new token for user : ${user.username}`)
       /*
-       * create a session for the new user
+       * generate new token
        */
-      await auth.use('api').login(user)
+      const token = await auth.use('api').generate(user, {
+        expiresIn: '30days',
+      })
 
       logger.info('Sending email -> verify:email')
       /*
@@ -192,7 +212,12 @@ export default class AuthController {
         .createSignedUrl()
         .send()
 
-      return response.json({ user, success: true, message: 'User registered' })
+      return response.json({
+        user,
+        success: true,
+        message: 'User registered',
+        token: token.toJSON(),
+      })
     } catch (error) {
       logger.error(error)
       return response.badRequest(error.messages)
@@ -277,7 +302,7 @@ export default class AuthController {
     if (!request.hasValidSignature()) {
       return response.json({
         success: false,
-        message: 'Signature is missing or URL was tampered',
+        message: 'Invalid verification url',
       })
     }
     // udate model

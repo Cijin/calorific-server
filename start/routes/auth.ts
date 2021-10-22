@@ -28,5 +28,4 @@ Route.group(() => {
   */
   // validate emails
   Route.get('/verify/:email', 'AuthController.validateEmail')
-  // @TODO: validate password reset link and show reset form
 }).prefix('/api/')

@@ -24,9 +24,11 @@
       "Database/*": [
         "./database/*"
       ],
-      "Types/*": [
-        "./@types/*"
-      ]
+      /*
+       *"Types/*": [ // Will revisit this later, as can't figure out why this does not worl :|
+       *  "./@types/*"
+       *]
+       */
     },
     "types": [
       "@adonisjs/core",

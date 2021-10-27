@@ -5,7 +5,8 @@ import Hash from '@ioc:Adonis/Core/Hash'
 import User from 'App/Models/User'
 import PasswordResetEmail from 'App/Mailers/PasswordResetEmail'
 import VerifyEmail from 'App/Mailers/VerifyEmail'
-import { UserTypeEnum } from '../../../@types/User'
+// types
+import { UserTypeEnum } from '../../../@types/user'
 
 export default class AuthController {
   public async login({ auth, request, response }: HttpContextContract) {

@@ -1,7 +1,7 @@
 import BaseSchema from '@ioc:Adonis/Lucid/Schema'
 
-export default class Resteraunts extends BaseSchema {
-  protected tableName = 'resteraunts'
+export default class Foods extends BaseSchema {
+  protected tableName = 'foods'
 
   public async up() {
     this.schema.createTable(this.tableName, (table) => {
@@ -10,10 +10,13 @@ export default class Resteraunts extends BaseSchema {
         .primary()
         .defaultTo(this.db.rawQuery('uuid_generate_v4()').knexQuery)
 
-      table.float('longitude').notNullable()
-      table.float('lattitude').notNullable()
+      table.uuid('resteraunt_id').references('resteraunts.id').notNullable()
       table.string('name').notNullable()
-      table.text('address').notNullable()
+      table.text('description').notNullable()
+      table.float('price').notNullable()
+      table.string('currency').notNullable()
+      table.specificType('ingredients', 'TEXT[]').notNullable()
+      table.integer('calories').notNullable()
 
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL

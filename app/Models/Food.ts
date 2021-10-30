@@ -1,5 +1,7 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
+import { BaseModel, column, BelongsTo, belongsTo } from '@ioc:Adonis/Lucid/Orm'
+
+import Resteraunt from 'App/Models/Resteraunt'
 
 export default class Food extends BaseModel {
   @column({ isPrimary: true })
@@ -31,4 +33,7 @@ export default class Food extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   public updatedAt: DateTime
+
+  @belongsTo(() => Resteraunt)
+  public resteraunt: BelongsTo<typeof Resteraunt>
 }

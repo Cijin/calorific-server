@@ -10,9 +10,6 @@ export default class Resteraunts extends BaseSchema {
         .primary()
         .defaultTo(this.db.rawQuery('uuid_generate_v4()').knexQuery)
 
-      /* Create foreign key column after foods table creation
-       *table.uuid('menu_id').references('foods.id')
-       */
       table.float('longitude').notNullable()
       table.float('lattitude').notNullable()
       table.string('name').notNullable()

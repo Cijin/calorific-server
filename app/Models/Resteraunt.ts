@@ -4,15 +4,12 @@ import { BaseModel, column } from '@ioc:Adonis/Lucid/Orm'
 export default class Resteraunt extends BaseModel {
   /*
    * use uuid as primary key
-   * self assign key every time a new user is created
+   * self assign key every time a new resteraunt is created
    */
   public static selfAssignPrimaryKey = true
 
   @column({ isPrimary: true })
   public id: string
-
-  @column()
-  public menu_id: string
 
   @column()
   public lattitude: number
